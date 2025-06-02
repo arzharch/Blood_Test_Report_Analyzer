@@ -30,7 +30,7 @@ help_patients = Task(
         "Include suggestions for speaking with a healthcare provider."
     ),
     agent=doctor,
-    tools=[],  # No need for read_report, as blood_text is directly provided
+    tools=[], 
     input_vars=["query", "blood_text"],
     async_execution=False
 )

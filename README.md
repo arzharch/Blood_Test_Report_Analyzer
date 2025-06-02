@@ -234,6 +234,14 @@ The application uses a database to store the results of the blood test analyses.
 -   **ORM:** SQLAlchemy is used as the Object-Relational Mapper (ORM) to interact with the database. This allows the application to work with database records as Python objects.
 -   **Production Use:** For a production environment, it is highly recommended to switch from SQLite to a more robust database like PostgreSQL. This would involve updating the `DATABASE_URL` in the `.env` file and ensuring the appropriate database driver (e.g., `psycopg2-binary`) is installed.
 
+### Provisional Database
+
+The application includes a provisional vector store using FAISS (Facebook AI Similarity Search) for handling embeddings.
+
+-   **Technology:** FAISS is a library for efficient similarity search and clustering of dense vectors. It is used here to create a simple, in-memory vector store.
+-   **Functionality:** The `vector_store` directory contains the FAISS index. This allows the application to perform similarity searches on the embeddings of the blood test reports, which can be useful for finding similar reports or for other advanced features.
+-   **Limitations:** This is a provisional setup and may not be suitable for a production environment. For a more robust solution, consider using a dedicated vector database like Pinecone or Weaviate.
+
 ### Celery and Task Queuing
 
 Celery is used to manage a distributed task queue, which is essential for offloading the time-consuming AI analysis from the web server.
