@@ -46,8 +46,8 @@ Follow these instructions to set up and run the project on your local machine.
 
 1.  **Clone the repository:**
     ```bash
-    git clone <your-repo-url>
-    cd <your-repo-directory>
+    git clone https://github.com/arzharch/Blood_Test_Report_Analyzer.git
+    cd blood_test_report_analyzer
     ```
 
 2.  **Create and activate a virtual environment:**
