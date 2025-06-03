@@ -45,8 +45,8 @@ Follow these instructions to set up and run the project on your local machine.
 
 1.  **Clone the repository:**
     ```bash
-    git clone <repository-url>
-    cd blood-test-analyser
+    git clone https://github.com/arzharch/Workify-AI-Internship-Debug-Challenge.git
+    cd Workify-AI-Internship-Debug-Challenge
     ```
 
 2.  **Create and activate a virtual environment:**
