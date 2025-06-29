@@ -72,6 +72,19 @@ Follow these instructions to set up and run the project on your local machine.
 You need to run three separate services: the Redis server, the FastAPI application, and the Celery worker.
 
 1.  **Start Redis:**
+
+    **Option 1: Using Docker (Recommended)**
+
+    If you have Docker installed, you can easily start a Redis container:
+
+    ```bash
+    docker run -d -p 6379:6379 --name blood-test-analyzer-redis redis:latest
+    ```
+
+    This command will download the latest Redis image, start a container in detached mode (`-d`), and map the container's port 6379 to the same port on your local machine.
+
+    **Option 2: Local Installation**
+
     If you have Redis installed locally, run:
     ```bash
     redis-server
