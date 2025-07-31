@@ -1,4 +1,4 @@
-# Blood Test Report Analyzer
+# AI-Powered Blood Test Report Analyzer
 
 This project is a sophisticated, AI-powered application designed to analyze blood test reports from PDF files. It extracts data, provides insights on nutrition and exercise, and ensures the security of sensitive information through encryption. The system is built with a scalable architecture using FastAPI for the API, Celery for asynchronous task processing, and CrewAI for orchestrating AI agents.
 
@@ -11,6 +11,7 @@ This project is a sophisticated, AI-powered application designed to analyze bloo
 -   **Flexible LLM Configuration:** Supports both local LLMs (via Ollama) and OpenAI models, with easy configuration switching.
 -   **Status Tracking:** Provides an endpoint to check the status of an analysis task.
 -   **Database Integration:** Stores analysis results in a database for persistence.
+-   **Vector Store:** Utilizes a FAISS vector store for efficient similarity search on report embeddings.
 -   **Interactive API Documentation:** Automatically generated, interactive API documentation via Swagger UI.
 -   **Task Monitoring:** Includes support for Flower, a real-time monitoring tool for Celery.
 
@@ -45,8 +46,8 @@ Follow these instructions to set up and run the project on your local machine.
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/arzharch/Workify-AI-Internship-Debug-Challenge.git
-    cd Workify-AI-Internship-Debug-Challenge
+    git clone <your-repo-url>
+    cd <your-repo-directory>
     ```
 
 2.  **Create and activate a virtual environment:**
@@ -234,9 +235,9 @@ The application uses a database to store the results of the blood test analyses.
 -   **ORM:** SQLAlchemy is used as the Object-Relational Mapper (ORM) to interact with the database. This allows the application to work with database records as Python objects.
 -   **Production Use:** For a production environment, it is highly recommended to switch from SQLite to a more robust database like PostgreSQL. This would involve updating the `DATABASE_URL` in the `.env` file and ensuring the appropriate database driver (e.g., `psycopg2-binary`) is installed.
 
-### Provisional Database
+### Vector Store with FAISS
 
-The application includes a provisional vector store using FAISS (Facebook AI Similarity Search) for handling embeddings.
+The application includes a vector store using FAISS (Facebook AI Similarity Search) for handling embeddings.
 
 -   **Technology:** FAISS is a library for efficient similarity search and clustering of dense vectors. It is used here to create a simple, in-memory vector store.
 -   **Functionality:** The `vector_store` directory contains the FAISS index. This allows the application to perform similarity searches on the embeddings of the blood test reports, which can be useful for finding similar reports or for other advanced features.
@@ -296,5 +297,3 @@ key = Fernet.generate_key()
 with open("secret.key", "wb") as key_file:
     key_file.write(key)
 ```
-
----
