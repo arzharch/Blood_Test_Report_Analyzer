@@ -61,12 +61,6 @@ Follow these instructions to set up and run the project on your local machine.
     pip install -r requirements.txt
     ```
 
-4.  **Configure environment variables:**
-    Create a `.env` file in the project root by copying the example.
-    ```bash
-    cp .env.example .env
-    ```
-    The default `.env` is configured for the local Ollama setup.
 
 ### Running the Application
 
