@@ -31,8 +31,4 @@ celery_app.conf.update(
     task_reject_on_worker_lost=True,
 
     result_expires=9000,
-
-    task_routes={
-        "worker_tasks.process_blood_test_analysis": {"queue": "analysis"},
-    }
 )

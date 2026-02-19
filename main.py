@@ -9,7 +9,7 @@ from celery.result import AsyncResult
 from celery_app import celery_app
 from worker_tasks import process_blood_test_analysis
 from util.crypto import encrypt_file, decrypt_file
-from database import get_analysis_by_id
+from database import get_analysis_by_id, create_analysis_record, get_all_analyses, update_analysis, SessionLocal, AnalysisResult
 from tools import BloodTestReportTool
 
 app = FastAPI(title="Blood Test Report Analyser")
@@ -39,8 +39,7 @@ async def analyze_blood_report(
             raise HTTPException(status_code=400, detail="Only PDF files are supported.")
 
         file_id = str(uuid.uuid4())
-        encrypted_path = os.path.join(UPLOAD_DIR, f"{file_id}.enc")
-
+        
         content = await file.read()
 
         # ✅ Use BloodTestReportTool to read content from PDF bytes
@@ -55,13 +54,27 @@ async def analyze_blood_report(
         encrypted_string = encrypt_file(content)
         print(f"[INFO] PDF encrypted successfully")
 
-        # ✅ Queue Celery task
-        task = process_blood_test_analysis.delay(encrypted_string, query.strip())
+        # ✅ Generate task_id beforehand
+        task_id = str(uuid.uuid4())
 
+        # ✅ Save task record in database FIRST
+        create_analysis_record(
+            id=file_id,
+            filename=file.filename,
+            query=query.strip(),
+            task_id=task_id,
+            encrypted_file_bytes=encrypted_string.encode("utf-8") # Store as bytes in LargeBinary
+        )
+
+        # ✅ Queue Celery task with pre-generated task_id
+        task = process_blood_test_analysis.apply_async(
+            args=[encrypted_string, query.strip()],
+            task_id=task_id
+        )
 
         return {
             "status": "queued",
-            "task_id": task.id,
+            "task_id": task_id,
             "analysis_id": file_id,
             "file_processed": file.filename,
             "query": query
@@ -81,10 +94,23 @@ async def get_task_status(task_id: str):
         task_result = AsyncResult(task_id, app=celery_app)
         status = task_result.status
 
+        # Also check database for extra info
+        session = SessionLocal()
+        db_record = session.query(AnalysisResult).filter_by(task_id=task_id).first()
+        session.close()
+
         response = {
             "task_id": task_id,
             "status": status,
         }
+
+        if db_record:
+            response.update({
+                "analysis_id": db_record.id,
+                "filename": db_record.filename,
+                "query": db_record.query,
+                "created_at": db_record.created_at.isoformat()
+            })
 
         if status == "SUCCESS":
             response["result"] = task_result.result
@@ -93,6 +119,26 @@ async def get_task_status(task_id: str):
 
         return response
 
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/history")
+async def get_all_task_history():
+    try:
+        records = get_all_analyses()
+        history = []
+        for r in records:
+            history.append({
+                "analysis_id": r.id,
+                "task_id": r.task_id,
+                "filename": r.filename,
+                "query": r.query,
+                "status": r.status,
+                "created_at": r.created_at.isoformat(),
+                "result": json.loads(r.result_json) if r.result_json else None
+            })
+        return {"history": history}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

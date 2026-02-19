@@ -3,6 +3,7 @@ Celery worker tasks for Blood Test Analysis System (Encrypted + Vector Memory Ve
 """
 
 import time
+import json
 from celery_app import celery_app
 from crewai import Crew, Process
 from agents import doctor, verifier, nutritionist, exercise_specialist
@@ -10,6 +11,7 @@ from task import help_patients, nutrition_analysis, exercise_planning, verificat
 from util.crypto import decrypt_file
 from memory.faiss_memory import add_to_memory
 from tools import BloodTestReportTool
+from database import update_analysis
 
 
 @celery_app.task(bind=True, max_retries=2, default_retry_delay=60)
@@ -26,6 +28,7 @@ def process_blood_test_analysis(self, encrypted_file_data: str, query: str):
     """
     try:
         print(f"[TASK] Starting blood test analysis for query: {query}")
+        update_analysis(self.request.id, "processing")
         start = time.time()
 
         # Decrypt PDF bytes
@@ -54,14 +57,19 @@ def process_blood_test_analysis(self, encrypted_file_data: str, query: str):
 
         print(f"[SUCCESS] Analysis completed in {duration:.2f}s")
 
-        return {
+        result_data = {
             "verification_result": str(crew.tasks[0].output),
             "doctor_analysis": str(crew.tasks[1].output),
             "nutrition_advice": str(crew.tasks[2].output),
             "exercise_plan": str(crew.tasks[3].output),
             "processing_time": f"{duration:.2f} seconds"
         }
+        
+        update_analysis(self.request.id, "completed", result_json=json.dumps(result_data))
+        
+        return result_data
 
     except Exception as e:
         print(f"[ERROR] Task failed: {e}")
+        update_analysis(self.request.id, "failed")
         raise self.retry(exc=e)
