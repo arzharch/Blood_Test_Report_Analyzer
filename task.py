@@ -1,6 +1,6 @@
 from crewai import Task
 from agents import doctor, nutritionist, exercise_specialist, analyze_nutrition, generate_exercise_plan
-from agents import verifier, verify_report
+from agents import verifier, verify_report, summary_agent
 
 # Verification task
 verification_task = Task(
@@ -38,12 +38,13 @@ help_patients = Task(
 # Nutrition analysis task
 nutrition_analysis = Task(
     description=(
-        "Analyze the provided blood test report text ({blood_text}) and identify any dietary deficiencies, "
-        "imbalances, or optimizations. Provide evidence-based nutrition advice in layman's terms."
+        "Analyze the provided blood test report text ({blood_text}) AND specifically address the user's query: '{query}'. "
+        "Identify any dietary deficiencies, imbalances, or optimizations relevant to the report and the query. "
+        "Provide evidence-based nutrition advice in layman's terms."
     ),
     expected_output=(
-        "A personalized nutrition recommendation list based on the blood report. "
-        "Include nutrient focus areas, food types to prioritize, and possible supplements if relevant."
+        "A personalized nutrition recommendation list that directly answers the user's query based on the blood report. "
+        "Include nutrient focus areas, food types to prioritize (or avoid if asked), and possible supplements if relevant."
     ),
     agent=nutritionist,
     tools=[analyze_nutrition],
@@ -54,15 +55,32 @@ nutrition_analysis = Task(
 # Exercise planning task
 exercise_planning = Task(
     description=(
-        "Based on the blood test report ({blood_text}), generate a health-appropriate exercise plan. "
-        "Factor in cardiovascular fitness, metabolic state, or any abnormalities."
+        "Based on the blood test report ({blood_text}) and the user's specific query: '{query}', "
+        "generate a health-appropriate exercise plan. Factor in cardiovascular fitness, metabolic state, or any abnormalities "
+        "mentioned in the report that are relevant to the user's question."
     ),
     expected_output=(
-        "An exercise plan tailored to the user's condition, including suggested frequency, types of exercise, "
+        "An exercise plan tailored to the user's condition and query, including suggested frequency, types of exercise, "
         "and any relevant safety precautions or goals."
     ),
     agent=exercise_specialist,
     tools=[generate_exercise_plan],
+    input_vars=["query", "blood_text"],
+    async_execution=False
+)
+
+# Final Specific Answer Task
+specific_query_answer = Task(
+    description=(
+        "You have access to the doctor's analysis, the nutritionist's advice, and the exercise specialist's plan. "
+        "Your final task is to answer the user's specific query: '{query}' as directly and concisely as possible. "
+        "Do not repeat all the technical details, but synthesize them into a clear answer for the user."
+    ),
+    expected_output=(
+        "A clear, direct answer to the user's query: '{query}', synthesizing information from all previous tasks."
+    ),
+    agent=summary_agent,
+    tools=[],
     input_vars=["query", "blood_text"],
     async_execution=False
 )

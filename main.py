@@ -66,9 +66,9 @@ async def analyze_blood_report(
             encrypted_file_bytes=encrypted_string.encode("utf-8") # Store as bytes in LargeBinary
         )
 
-        # ✅ Queue Celery task with pre-generated task_id
+        # ✅ Queue Celery task with pre-extracted text
         task = process_blood_test_analysis.apply_async(
-            args=[encrypted_string, query.strip()],
+            args=[blood_text, query.strip()],
             task_id=task_id
         )
 

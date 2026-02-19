@@ -6,8 +6,8 @@ import time
 import json
 from celery_app import celery_app
 from crewai import Crew, Process
-from agents import doctor, verifier, nutritionist, exercise_specialist
-from task import help_patients, nutrition_analysis, exercise_planning, verification_task
+from agents import doctor, verifier, nutritionist, exercise_specialist, summary_agent
+from task import help_patients, nutrition_analysis, exercise_planning, verification_task, specific_query_answer
 from util.crypto import decrypt_file
 from memory.faiss_memory import add_to_memory
 from tools import BloodTestReportTool
@@ -15,12 +15,12 @@ from database import update_analysis
 
 
 @celery_app.task(bind=True, max_retries=2, default_retry_delay=60)
-def process_blood_test_analysis(self, encrypted_file_data: str, query: str):
+def process_blood_test_analysis(self, blood_text: str, query: str):
     """
-    Celery task to process encrypted blood test PDF and generate analysis.
+    Celery task to generate analysis from blood test text.
 
     Args:
-        encrypted_file_data (str): Encrypted file content (base64-encoded).
+        blood_text (str): Extracted text from the blood test PDF.
         query (str): The user's question or prompt.
 
     Returns:
@@ -31,21 +31,14 @@ def process_blood_test_analysis(self, encrypted_file_data: str, query: str):
         update_analysis(self.request.id, "processing")
         start = time.time()
 
-        # Decrypt PDF bytes
-        pdf_bytes = decrypt_file(encrypted_file_data)
-
-        # Parse PDF using our custom tool (uses pdfplumber internally)
-        tool = BloodTestReportTool()
-        blood_text = tool.read_pdf_bytes(pdf_bytes)
-
         # Store parsed report in vector memory
         add_to_memory(blood_text, metadata={"source": "blood_report", "query": query})
         print("[MEMORY] Blood test report added to FAISS vector store")
 
         # Setup CrewAI
         crew = Crew(
-            agents=[verifier, doctor, nutritionist, exercise_specialist],
-            tasks=[verification_task, help_patients, nutrition_analysis, exercise_planning],
+            agents=[verifier, doctor, nutritionist, exercise_specialist, summary_agent],
+            tasks=[verification_task, help_patients, nutrition_analysis, exercise_planning, specific_query_answer],
             process=Process.sequential,
             verbose=True,
             max_rpm=25,
@@ -62,6 +55,7 @@ def process_blood_test_analysis(self, encrypted_file_data: str, query: str):
             "doctor_analysis": str(crew.tasks[1].output),
             "nutrition_advice": str(crew.tasks[2].output),
             "exercise_plan": str(crew.tasks[3].output),
+            "direct_answer": str(crew.tasks[4].output),
             "processing_time": f"{duration:.2f} seconds"
         }
         
